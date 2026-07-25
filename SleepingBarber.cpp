@@ -116,4 +116,3 @@ int main() {
     t1.join();
     return 0;
 }
-How is it different to yours?
