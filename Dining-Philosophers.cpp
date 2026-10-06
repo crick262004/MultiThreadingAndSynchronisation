@@ -18,11 +18,12 @@ public:
         int right = (philosopher + 1)%5;
 
         int mini = min(left, right);
-		f[mini].acquire();
         int maxi = max(left, right);
+
+		f[mini].acquire();
         f[maxi].acquire();
 
-        pickLeftFork();
+        pickLeftFork(); // we don't know if this is mini or maxi, so need to acquire both first
         pickRightFork();
         eat();
         putLeftFork();

@@ -6,7 +6,7 @@
 #include <chrono>
 
 const int MAX_BUFFER_SIZE = 5;
-std::queue<int> buffer;
+std::queue<int> buffer; 
 
 // Semaphores for signaling state
 std::counting_semaphore<MAX_BUFFER_SIZE> emptySlots(MAX_BUFFER_SIZE);

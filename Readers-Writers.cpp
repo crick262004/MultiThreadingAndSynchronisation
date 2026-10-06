@@ -38,10 +38,10 @@ void reader() {
     
     // 2. --- READ DATA CONCURRENTLY HERE ---
     
-    // 3. Unregister when done
+    // 3. Unregister when done (no lock around this as here, we don't require synchronisation with the writer)
     read_count--;
     
-    // 4. If this is the absolute last reader leaving, wake up the writer
+    // 4. If this is the absolute last reader leaving, wake up the writer (Only an optimisation)
     if (read_count == 0) {
         cv.notify_one();
     }

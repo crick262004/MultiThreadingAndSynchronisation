@@ -22,18 +22,23 @@
 class ThreadPool {
 private:
     std::vector<std::thread> workers;
-    std::queue<std::function<void()>> tasks;
+    std::queue<std::function<void()>> tasks; // storing any callable object
     std::mutex mtx;
     std::condition_variable cv;
     bool stop = false;
 
-    void workerLoop() {
+    void workerLoop() { // private member fn, which will be used to initialise each thread
         while (true) {
-            std::function<void()> task;
-            {
-                std::unique_lock<std::mutex> lock(mtx);
+            // main per-thread execution: 
+
+            std::function<void()> task; // slot to store the task we will try to pop from the tasks queue
+
+            { // separate scope to automically handle lifetime of mutex
+                std::unique_lock<std::mutex> lock(mtx); // RAII
+
                 // Sleep only when queue is empty AND not shutting down.
                 cv.wait(lock, [this] { return stop || !tasks.empty(); });
+
                 if (stop && tasks.empty())
                     return;                       // pool shutting down, exit
                 task = std::move(tasks.front());
@@ -50,25 +55,14 @@ public:
         /*
           It constructs a std::thread that runs workerLoop on this specific ThreadPool instance.
 
-          Broken down:
-        
           - workers — a std::vector<std::thread>
           - emplace_back(...) — constructs a std::thread in place at the back of the vector
           - &ThreadPool::workerLoop — pointer to the member function. The &ClassName::method
             syntax is how you take the address of a member function in C++
           - this — the object instance to call it on
         
-          When you pass a member function to std::thread, you need two things: the function
-          pointer and the object it should run on. So this is essentially saying "start a thread
-          that calls this->workerLoop()".
-        
-          It's equivalent to the lambda version I had earlier:
-        
+          It's equivalent to the lambda version:
           workers.emplace_back([this] { workerLoop(); });
-        
-          Both do the same thing — spawn a thread running workerLoop on the current ThreadPool
-          object. The member-function-pointer form is just the direct way; the lambda is the
-          wrapper way.
         */
     }
 
@@ -82,7 +76,9 @@ public:
 
     ~ThreadPool() {
         {
-            std::unique_lock<std::mutex> lock(mtx);
+            std::unique_lock<std::mutex> lock(mtx); // use the same mutex for the stop variable as for the tasks queue
+            // because of the cv guard
+            // One mutex for all shared state the condition depends on is the standard pattern.
             stop = true;
         }
         cv.notify_all();   // wake everyone so they see the flag and exit
@@ -108,6 +104,7 @@ ThreadPool pool(4);
     }
 
     // Destructor joins all workers (waits for queued tasks to finish).
+    // main thread runs the destructor?
     return 0;
 
 }
