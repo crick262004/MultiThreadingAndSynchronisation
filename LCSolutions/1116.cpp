@@ -1,9 +1,9 @@
 class ZeroEvenOdd {
 private:
     int n;
-    std::binary_semaphore z = std::binary_semaphore(1);
-    std::binary_semaphore o = std::binary_semaphore(0);
-    std::binary_semaphore e = std::binary_semaphore(0);
+    std::binary_semaphore z{1};
+    std::binary_semaphore o{0};
+    std::binary_semaphore e{0};
     int x = 0;
 
 public:

@@ -33,3 +33,37 @@ public:
         }
     }
 };
+
+
+// semaphore approach:
+
+class FooBar {
+private:
+    int n;
+    counting_semaphore<1> f, s;
+
+public:
+    FooBar(int n) : f(1), s(0){
+        this->n = n;
+    }
+
+    void foo(function<void()> printFoo) {
+        
+        for (int i = 0; i < n; i++) {
+            f.acquire();
+        	// printFoo() outputs "foo". Do not change or remove this line.
+        	printFoo();
+            s.release();
+        }
+    }
+
+    void bar(function<void()> printBar) {
+        
+        for (int i = 0; i < n; i++) {
+            s.acquire();
+        	// printBar() outputs "bar". Do not change or remove this line.
+        	printBar();
+            f.release();
+        }
+    }
+};
