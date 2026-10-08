@@ -19,7 +19,7 @@ private:
 
     // Route a key to a specific shard using hashing
     Shard& getShard(const Key& key) {
-        size_t hash_val = std::hash<Key>{}(key);
+        size_t hash_val = std::hash<Key>{}(key); // brace initialization that constructs an unnamed temporary of functor "hash"
         return shards_[hash_val % num_shards_];
     }
 

@@ -18,8 +18,8 @@ class Solution {
     unordered_set<string> visited;
     queue<string> taskQueue;
     mutex mtx;
-    condition_variable cv, doneCv;
-    atomic<int> inFlight{0};
+    condition_variable cv, doneCv; // 2 CVs, one for main worker loops, one for the stopping (for crawler thread) when inFlight == 0
+    atomic<int> inFlight{0}; // a standard approach, imp
     bool stop = false;
 
     string getHostname(const string& url) {

@@ -88,21 +88,21 @@ public:
             auto ready = registry.get_next_jobs(finished);
 
             for (auto& job : ready) {
-                if (dispatched.count(job)) continue;   // already running
+                if (dispatched.count(job)) continue; 
                 dispatched.insert(job);
                 inFlight++;
 
                 pool.enqueue([this, job] {
-                    registry.funcs[job]();              // do the work
+                    registry.funcs[job]();
 
                     std::lock_guard<std::mutex> lg(mtx);
                     finished.insert(job);
                     inFlight--;
-                    cv.notify_one();                    // wake scheduler
+                    cv.notify_one();
                 });
             }
 
-            if (inFlight == 0) break;                  // all done
+            if (inFlight == 0) break;  
 
             // sleep until a job finishes
             size_t prev = finished.size();

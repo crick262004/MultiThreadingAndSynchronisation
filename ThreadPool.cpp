@@ -27,7 +27,7 @@ private:
     std::condition_variable cv;
     bool stop = false;
 
-    void workerLoop() { // private member fn, which will be used to initialise each thread
+    void workerLoop() { 
         while (true) {
             // main per-thread execution: 
 
@@ -54,11 +54,7 @@ public:
         workers.emplace_back(&ThreadPool::workerLoop, this);
         /*
           It constructs a std::thread that runs workerLoop on this specific ThreadPool instance.
-
-          - workers — a std::vector<std::thread>
-          - emplace_back(...) — constructs a std::thread in place at the back of the vector
-          - &ThreadPool::workerLoop — pointer to the member function. The &ClassName::method
-            syntax is how you take the address of a member function in C++
+          - &ThreadPool::workerLoop — pointer to the member function. 
           - this — the object instance to call it on
         
           It's equivalent to the lambda version:
@@ -68,7 +64,7 @@ public:
 
     void enqueue(std::function<void()> task) {
         {
-            std::unique_lock<std::mutex> lock(mtx);
+            std::lock_guard<std::mutex> lock(mtx);
             tasks.push(std::move(task));
         }
         cv.notify_one();   // wake one sleeping worker (no-op if all busy)
@@ -76,9 +72,9 @@ public:
 
     ~ThreadPool() {
         {
-            std::unique_lock<std::mutex> lock(mtx); // use the same mutex for the stop variable as for the tasks queue
+            std::lock_guard<std::mutex> lock(mtx); // use the same mutex for the stop variable as for the tasks queue
             // because of the cv guard
-            // One mutex for all shared state the condition depends on is the standard pattern.
+            // One mutex for all shared state the condition depends on: is the standard pattern.
             stop = true;
         }
         cv.notify_all();   // wake everyone so they see the flag and exit
@@ -88,11 +84,8 @@ public:
 
 };
 
-// -------------------------------------------------------------------------
-// Demo
-// -------------------------------------------------------------------------
 int main() {
-ThreadPool pool(4);
+    ThreadPool pool(4);
 
     for (int i = 1; i <= 8; ++i) {
         pool.enqueue([i] {
