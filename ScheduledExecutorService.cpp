@@ -71,27 +71,22 @@ class ScheduledExecutorService {
     // Single scheduler thread: sleeps until the earliest task is due,
     // wakes early if a new (possibly earlier) task is added.
     void schedulerLoop() {
-        unique_lock<mutex> lock(mtx_);
-        while (!stopped_) {
-            if (pq_.empty()) {
-                schedulerCv_.wait(lock, [this] {
-                    return stopped_.load() || !pq_.empty();
-                });
-                continue;
-            }
+        while (true) {
+            unique_lock<mutex> lock(mtx_);
+            schedulerCv_.wait(lock, [this] {
+                return stopped_.load() || !pq_.empty();
+            });
+            if (stopped_) return;
 
             auto execTime = pq_.top().execTime;
             if (execTime > steady_clock::now()) {
-                // Sleep until this task is due (or a new task wakes us)
                 schedulerCv_.wait_until(lock, execTime);
                 continue;
             }
 
-            // Task is ready — pop it
             Task task = pq_.top();
             pq_.pop();
 
-            // FIXED_RATE: re-schedule from the *scheduled* time, not wall-clock
             if (task.type == TaskType::FIXED_RATE) {
                 Task next = task;
                 next.execTime += task.period;
@@ -100,7 +95,6 @@ class ScheduledExecutorService {
 
             lock.unlock();
 
-            // FIXED_DELAY: re-schedule after execution finishes
             if (task.type == TaskType::FIXED_DELAY) {
                 auto cmd = task.command;
                 auto period = task.period;
@@ -116,8 +110,6 @@ class ScheduledExecutorService {
             } else {
                 submitToPool(move(task.command));
             }
-
-            lock.lock();
         }
     }
 
